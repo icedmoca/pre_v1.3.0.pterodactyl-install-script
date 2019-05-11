@@ -1,4 +1,5 @@
 #!/bin/bash
+#llynGq6k97xPD0aumF3mDrPoat3tuTpvF25k0FxY
 
 output(){
     echo -e '\e[36m'$1'\e[0m';
@@ -995,8 +996,8 @@ install_phpmyadmin(){
 \$cfg['ServerDefault'] = 1;
 \$cfg['UploadDir'] = '';
 \$cfg['SaveDir'] = '';
-\$cfg['CaptchaLoginPublicKey'] = '6LcJcjwUAAAAAO_Xqjrtj9wWufUpYRnK6BW8lnfn';
-\$cfg['CaptchaLoginPrivateKey'] = '6LcJcjwUAAAAALOcDJqAEYKTDhwELCkzUkNDQ0J5'
+\$cfg['CaptchaLoginPublicKey'] = 'llynGq6k97xPD0aumF3mDrPoat3tuTpvF25k0FxY';
+\$cfg['CaptchaLoginPrivateKey'] = 'llynGq6k97xPD0aumF3mDrPoat3tuTpvF25k0FxY'
 ?>    
 EOF
     output "Installation completed."
