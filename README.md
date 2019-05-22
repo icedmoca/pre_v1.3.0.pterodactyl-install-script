@@ -1,8 +1,8 @@
 [![Logo Image](https://cdn.pterodactyl.io/logos/Banner%20Logo%20Black@2x.png)](https://pterodactyl.io)
 
-# install
+# Super simple install script
 Hi welcome.
-Pterodactyl install script! No Pirates here. jk
+Pterodactyl install script!
 How to install: bash <(curl -s https://raw.githubusercontent.com/icedmoca/install/master/install.sh)
 
 
