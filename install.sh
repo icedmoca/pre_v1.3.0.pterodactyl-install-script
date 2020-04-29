@@ -10,7 +10,7 @@ warn(){
 
 preflight(){
     output "Pterodactyl Installation & Upgrade script"
-    output "Copyright © 2019 <minenite.net>."
+    output "Copyright © 2020 <minenite.net>."
     output "Please report any issues or copyright violations to https://www.minenite.net"
     output ""
 
@@ -159,8 +159,8 @@ preflight(){
     | |  ||| || | \|||  /_ | | \||| |  | |  |  /_
     \_/  \|\_/\_/  \|\____\\_/  \|\_/  \_/  \____\
 
-    Pterodactyl Installation Script
-    Copyright © 2019 icedmoca <minenite.net>
+    Minenite Network Panel
+    Copyright © 2020 icedmoca <minenite.net>
 
 
 EOF
