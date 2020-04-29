@@ -1,4 +1,3 @@
-[![Logo Image](blob:https://imgur.com/bcb8f179-cfa8-4446-b69e-cd6ba229a1e4)](https://www.minenite.net)
 
 # Minenite Pterodactyl simple install script
 Hi welcome.
