@@ -1224,7 +1224,7 @@ install_daemon() {
     mkdir -p /srv/daemon /srv/daemon-data
     cd /srv/daemon
     curl -L https://github.com/pterodactyl/daemon/releases/download/v0.6.12/daemon.tar.gz | tar --strip-components=1 -xzv
-    npm install --only=production
+    npm install --only=production --no-audit --unsafe-perm
     bash -c 'cat > /etc/systemd/system/wings.service' <<-'EOF'
 [Unit]
 Description=Pterodactyl Wings Daemon
