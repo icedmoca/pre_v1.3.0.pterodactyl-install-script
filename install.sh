@@ -614,7 +614,7 @@ install_pterodactyl() {
     output "Downloading Pterodactyl."
     mkdir -p /var/www/pterodactyl
     cd /var/www/pterodactyl
-    curl -Lo panel.tar.gz https://github.com/pterodactyl/panel/releases/download/v0.7.13/panel.tar.gz
+    curl -Lo panel.tar.gz https://github.com/pterodactyl/panel/releases/download/v0.7.17/panel.tar.gz
     tar --strip-components=1 -xzvf panel.tar.gz
     chmod -R 755 storage/* bootstrap/cache/
 
@@ -705,7 +705,7 @@ EOF
 upgrade_pterodactyl(){
     cd /var/www/pterodactyl
     php artisan down
-    curl -L https://github.com/pterodactyl/panel/releases/download/v0.7.13/panel.tar.gz | tar --strip-components=1 -xzv
+    curl -L https://github.com/pterodactyl/panel/releases/download/v0.7.17/panel.tar.gz | tar --strip-components=1 -xzv
     unzip panel
     chmod -R 755 storage/* bootstrap/cache
     composer install --no-dev --optimize-autoloader
@@ -719,7 +719,7 @@ upgrade_pterodactyl(){
         semanage fcontext -a -t httpd_sys_rw_content_t "/var/www/pterodactyl/storage(/.*)?"
         restorecon -R /var/www/pterodactyl
     fi
-    output "Your panel has been updated to version 0.7.13."
+    output "Your panel has been updated to version 0.7.17."
     php artisan up
     php artisan queue:restart
 }
@@ -1223,7 +1223,7 @@ install_daemon() {
     output "Installing the Pterodactyl Daemon."
     mkdir -p /srv/daemon /srv/daemon-data
     cd /srv/daemon
-    curl -L https://github.com/pterodactyl/daemon/releases/download/v0.6.12/daemon.tar.gz | tar --strip-components=1 -xzv
+    curl -L https://github.com/pterodactyl/daemon/releases/download/v0.6.13/daemon.tar.gz | tar --strip-components=1 -xzv
     npm install --only=production --no-audit --unsafe-perm
     bash -c 'cat > /etc/systemd/system/wings.service' <<-'EOF'
 [Unit]
@@ -1260,11 +1260,11 @@ EOF
 upgrade_daemon(){
     cd /srv/daemon
     service wings stop
-    curl -L https://github.com/pterodactyl/daemon/releases/download/v0.6.12/daemon.tar.gz | tar --strip-components=1 -xzv
+    curl -L https://github.com/pterodactyl/daemon/releases/download/v0.6.13/daemon.tar.gz | tar --strip-components=1 -xzv
     npm install -g npm
     npm install --only=production
     service wings restart
-    output "Your daemon has been updated to version 0.6.12."
+    output "Your daemon has been updated to version 0.6.13."
     output "npm has been updated to the latest version."
 }
 
