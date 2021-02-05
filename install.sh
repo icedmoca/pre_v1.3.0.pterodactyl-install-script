@@ -33,6 +33,19 @@ error() {
 done=false
 
 output "Pterodactyl installation script @ $SCRIPT_VERSION"
+output " _____ _   _  _____ _____ ___   _      _      ___________"
+output "|_   _| \ | |/  ___|_   _/ _ \ | |    | |    |  ___|  _  \""
+output "  | | |  \| |\ `--.  | |/ /_\ \| |    | |    | |__ | | | |  _   _  ___ _   _  ___""
+output "  | | | . ` | `--. \ | ||  _  || |    | |    |  __|| | | | | | | |/ _ \ | | |/ _ \""
+output
+output
+output
+output
+output
+output
+output
+output
+output
 output
 output "https://github.com/icedmoca/pterodactylinstallscript"
 output
