@@ -2,31 +2,31 @@
 
 set -e
 
-#############################################################################
-#                                                                           #
-# Project 'pterodactyl-installer'                                           #
-#                                                                           #
-# Copyright (C) 2018 - 2021, Vilhelm Prytz, <vilhelm@prytznet.se>           #
-#                                                                           #
-#   This program is free software: you can redistribute it and/or modify    #
-#   it under the terms of the GNU General Public License as published by    #
-#   the Free Software Foundation, either version 3 of the License, or       #
-#   (at your option) any later version.                                     #
-#                                                                           #
-#   This program is distributed in the hope that it will be useful,         #
-#   but WITHOUT ANY WARRANTY; without even the implied warranty of          #
-#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           #
-#   GNU General Public License for more details.                            #
-#                                                                           #
-#   You should have received a copy of the GNU General Public License       #
-#   along with this program.  If not, see <https://www.gnu.org/licenses/>.  #
-#                                                                           #
-# https://github.com/vilhelmprytz/pterodactyl-installer/blob/master/LICENSE #
-#                                                                           #
-# This script is not associated with the official Pterodactyl Project.      #
-# https://github.com/vilhelmprytz/pterodactyl-installer                     #
-#                                                                           #
-#############################################################################
+##############################################################################
+#                                                                            #
+# Project 'pterodactyl-installer-script'                                     #
+#                                                                            #
+#            This script is intended for personal use ONLY                   #
+#                                                                            #
+#   This program is free software: you can redistribute it and/or modify     #
+#   it under the terms of the GNU General Public License as published by     #
+#   the Free Software Foundation, either version 3 of the License, or        #
+#   (at your option) any later version.                                      #
+#                                                                            #
+#   This program is distributed in the hope that it will be useful,          #
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of           #
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the            #
+#   GNU General Public License for more details.                             #
+#                                                                            #
+#   You should have received a copy of the GNU General Public License        #
+#   along with this program.  If not, see <https://www.gnu.org/licenses/>.   #
+#                                                                            #
+# https://github.com/icedmoca/pterodactyl-install-script/blob/master/LICENSE #
+#                                                                            #
+# This script is not associated with the official Pterodactyl Project.       #
+# https://github.com/icedmoca/pterodactyl-install-script                     #
+#                                                                            #
+##############################################################################
 
 SCRIPT_VERSION="v0.2.0"
 
@@ -60,20 +60,18 @@ done=false
 
 output "Pterodactyl installation script @ $SCRIPT_VERSION"
 output
-output "Copyright (C) 2018 - 2021, Vilhelm Prytz, <vilhelm@prytznet.se>"
-output "https://github.com/vilhelmprytz/pterodactyl-installer"
+output "https://github.com/icedmoca/pterodactyl-install-script"
 output
-output "Sponsoring/Donations: https://github.com/vilhelmprytz/pterodactyl-installer?sponsor=1"
 output "This script is not associated with the official Pterodactyl Project."
 
 output
 
 panel() {
-  bash <(curl -s https://raw.githubusercontent.com/vilhelmprytz/pterodactyl-installer/$SCRIPT_VERSION/install-panel.sh)
+  bash <(curl -s https://raw.githubusercontent.com/icedmoca/pterodactyl-install-script/$SCRIPT_VERSION/install-panel.sh)
 }
 
 wings() {
-  bash <(curl -s https://raw.githubusercontent.com/vilhelmprytz/pterodactyl-installer/$SCRIPT_VERSION/install-wings.sh)
+  bash <(curl -s https://raw.githubusercontent.com/icedmoca/pterodactyl-install-script/$SCRIPT_VERSION/install-wings.sh)
 }
 
 while [ "$done" == false ]; do
