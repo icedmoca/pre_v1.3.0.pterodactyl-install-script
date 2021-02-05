@@ -1,5 +1,5 @@
 
-# Minenite Pterodactyl simple install script
+# :bird: pterodactyl-install-script
 Hi welcome.
 Pterodactyl install script!
 
