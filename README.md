@@ -1,5 +1,6 @@
 
 # :bird: pterodactyl-install-script
+[![Build Status](https://travis-ci.com/icedmoca/pterodactyl-install-script.svg?branch=master)](https://travis-ci.com/github/icedmoca/pterodactyl-install-script)
 Hi welcome.
 Pterodactyl install script!
 
