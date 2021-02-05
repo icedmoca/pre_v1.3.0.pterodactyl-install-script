@@ -536,7 +536,6 @@ debian_stretch_dep() {
   apt -y install dirmngr
 
   # install PHP 7.4 using sury's repo instead of PPA
-  # this guide shows how: https://vilhelmprytz.se/2018/08/22/install-php72-on-Debian-8-and-9.html
   apt install ca-certificates apt-transport-https lsb-release -y
   wget -O /etc/apt/trusted.gpg.d/php.gpg https://packages.sury.org/php/apt.gpg
   echo "deb https://packages.sury.org/php/ $(lsb_release -sc) main" | tee /etc/apt/sources.list.d/php.list
@@ -563,7 +562,6 @@ debian_dep() {
   apt -y install dirmngr
 
   # install PHP 7.4 using sury's repo instead of default 7.2 package (in buster repo)
-  # this guide shows how: https://vilhelmprytz.se/2018/08/22/install-php72-on-Debian-8-and-9.html
   apt install ca-certificates apt-transport-https lsb-release -y
   wget -O /etc/apt/trusted.gpg.d/php.gpg https://packages.sury.org/php/apt.gpg
   echo "deb https://packages.sury.org/php/ $(lsb_release -sc) main" | tee /etc/apt/sources.list.d/php.list
@@ -827,9 +825,6 @@ main() {
 
   print_brake 70
   echo "* Pterodactyl panel installation script @ $SCRIPT_RELEASE"
-  echo "*"
-  echo "* Copyright (C) 2018 - 2021, Vilhelm Prytz, <vilhelm@prytznet.se>"
-  echo "* https://github.com/vilhelmprytz/pterodactyl-installer"
   echo "*"
   echo "* This script is not associated with the official Pterodactyl Project."
   echo "*"

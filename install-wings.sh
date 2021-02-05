@@ -55,7 +55,7 @@ fi
 
 # download URLs
 WINGS_DL_URL="https://github.com/pterodactyl/wings/releases/latest/download/wings_linux_amd64"
-GITHUB_BASE_URL="https://raw.githubusercontent.com/vilhelmprytz/pterodactyl-installer/$GITHUB_SOURCE"
+GITHUB_BASE_URL="https://raw.githubusercontent.com/icedmoca/pterodactyl-install-script/$GITHUB_SOURCE"
 
 COLOR_RED='\033[0;31m'
 COLOR_NC='\033[0m'
@@ -493,9 +493,6 @@ main() {
 
   print_brake 70
   echo "* Pterodactyl Wings installation script @ $SCRIPT_RELEASE"
-  echo "*"
-  echo "* Copyright (C) 2018 - 2021, Vilhelm Prytz, <vilhelm@prytznet.se>"
-  echo "* https://github.com/vilhelmprytz/pterodactyl-installer"
   echo "*"
   echo "* This script is not associated with the official Pterodactyl Project."
   echo "*"
