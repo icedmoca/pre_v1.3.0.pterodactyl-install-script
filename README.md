@@ -10,10 +10,20 @@ Lightweight installation script for game server manager pterodactyl
 
 To use the installation scripts, simply run this command as root. The script will ask you whether you would like to install just the panel, just the daemon or both.
 
-```bash
-bash <(curl -s https://raw.githubusercontent.com/icedmoca/pterodactyl-install-script/v0.2/install.sh)
-```
+Works best on a fresh install.
 
+```bash
+git clone https://github.com/icedmoca/pterodactyl-install-script.git
+```
+```bash
+chmod -R 777 pterodactyl-install-script/
+```
+```bash
+login as root
+```
+```bash
+./pterodactyl-install-script/install.sh
+```
 ### Supported panel operating systems and webservers
 
 | Operating System | Version | nginx support      | PHP Version | wings support
