@@ -41,3 +41,4 @@ login as root
 |                  | 8       | :white_check_mark: | 7.4         | :white_check_mark: |
 
 _Firewall setup is optional depending on experience_
+[Configuring a Server Network (BungeeCord, Waterfall, HexaCord, etc.)](https://pterodactyl.io/community/games/minecraft.html#configuring-a-server-network-bungeecord-waterfall-hexacord-etc)
