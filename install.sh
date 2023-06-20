@@ -194,7 +194,7 @@ main() {
   # Existing code for the main execution flow
 }
 
-function goodbye {
+goodbye() {
   echo ""
   print_brake 70
   echo "* Wings installation completed"
