@@ -120,6 +120,7 @@ hyperlink() {
 detect_distro() {
   # Existing code for detecting the distribution (Ubuntu, Debian, CentOS, etc.)
 }
+}
 
 check_os_comp() {
   # Existing code for checking the compatibility of the operating system
