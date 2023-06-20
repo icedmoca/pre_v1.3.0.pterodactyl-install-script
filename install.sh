@@ -102,8 +102,9 @@ print_warning() {
   echo -e "* ${COLOR_YELLOW}WARNING${COLOR_NC}: $1"
   echo ""
 }
+
 print_brake() {
-  for ((n=0;n<$1;n++)); do
+  for ((n=0; n<$1; n++)); do
     echo -n "#"
   done
   echo ""
@@ -114,7 +115,7 @@ hyperlink() {
 }
 
 #################################
-####### OS check funtions #######
+####### OS check functions ######
 #################################
 
 detect_distro() {
@@ -141,7 +142,7 @@ dnf_update() {
   # Existing code for updating packages (DNF)
 }
 
-enable_docker(){
+enable_docker() {
   # Existing code for enabling and starting Docker service
 }
 
