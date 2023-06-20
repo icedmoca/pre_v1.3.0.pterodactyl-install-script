@@ -120,7 +120,6 @@ hyperlink() {
 detect_distro() {
   # Existing code for detecting the distribution (Ubuntu, Debian, CentOS, etc.)
 }
-}
 
 check_os_comp() {
   # Existing code for checking the compatibility of the operating system
@@ -195,8 +194,30 @@ main() {
 }
 
 function goodbye {
-  # Existing code for displaying the completion message
+  echo ""
+  print_brake 70
+  echo "* Wings installation completed"
+  echo "*"
+  echo "* To continue, you need to configure Wings to run with your panel"
+  echo "* Please refer to the official guide, $(hyperlink 'https://pterodactyl.io/wings/1.0/installing.html#configure-daemon')"
+  echo "* "
+  echo "* You can either copy the configuration file from the panel manually to /etc/pterodactyl/config.yml"
+  echo "* or, you can use the \"auto deploy\" button from the panel and simply paste the command in this terminal"
+  echo "* "
+  echo "* You can then start Wings manually to verify that it's working"
+  echo "*"
+  echo "* sudo wings"
+  echo "*"
+  echo "* Once you have verified that it is working, use CTRL+C and then start Wings as a service (runs in the background)"
+  echo "*"
+  echo "* systemctl start wings"
+  echo "*"
+  echo -e "* ${COLOR_RED}Note${COLOR_NC}: It is recommended to enable swap (for Docker, read more about it in official documentation)."
+  [ "$CONFIGURE_FIREWALL" == false ] && echo -e "* ${COLOR_RED}Note${COLOR_NC}: If you haven't configured your firewall, ports 8080 and 2022 needs to be open."
+  print_brake 70
+  echo ""
 }
+
 
 # Run the script
 main
