@@ -30,7 +30,7 @@ set -e
 
 SCRIPT_VERSION="v0.2"
 
-# exit with error status code if user is not root
+# exit with error status code if user is not root or sudo
 if [[ $EUID -ne 0 ]]; then
   echo "* This script must be executed with root privileges (sudo)." 1>&2
   exit 1
@@ -39,7 +39,9 @@ fi
 # check for curl
 if ! [ -x "$(command -v curl)" ]; then
   echo "* curl is required in order for this script to work."
-  echo "* install using apt (Debian and derivatives) or yum/dnf (CentOS)"
+  echo "* Install curl using apt:"
+  echo "  sudo apt update"
+  echo "  sudo apt install curl"
   exit 1
 fi
 
@@ -67,11 +69,11 @@ output "This script is not associated with the official Pterodactyl Project."
 output
 
 panel() {
-  bash <(curl -s https://raw.githubusercontent.com/icedmoca/pterodactyl-install-script/$SCRIPT_VERSION/install-panel.sh)
+  bash <(curl -s https://raw.githubusercontent.com/icedmoca/pterodactyl-install-script/$SCRIPT_VERSION/install-panel.sh) --ubuntu-22.04
 }
 
 wings() {
-  bash <(curl -s https://raw.githubusercontent.com/icedmoca/pterodactyl-install-script/$SCRIPT_VERSION/install-wings.sh)
+  bash <(curl -s https://raw.githubusercontent.com/icedmoca/pterodactyl-install-script/$SCRIPT_VERSION/install-wings.sh) --ubuntu-22.04
 }
 
 while [ "$done" == false ]; do
@@ -96,6 +98,7 @@ while [ "$done" == false ]; do
   echo -n "* Input 0-$((${#actions[@]}-1)): "
   read -r action
 
+  [ -z "$action" ] &&
   [ -z "$action" ] && error "Input is required" && continue
 
   valid_input=("$(for ((i=0;i<=${#actions[@]}-1;i+=1)); do echo "${i}"; done)")
