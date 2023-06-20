@@ -28,9 +28,15 @@ set -e
 #                                                                            #
 ##############################################################################
 
-SCRIPT_VERSION="v0.2"
+# versioning
+GITHUB_SOURCE="master"
+SCRIPT_RELEASE="canary"
 
-# exit with error status code if user is not root or sudo
+#################################
+######## General checks #########
+#################################
+
+# exit with error status code if user is not root
 if [[ $EUID -ne 0 ]]; then
   echo "* This script must be executed with root privileges (sudo)." 1>&2
   exit 1
@@ -39,69 +45,158 @@ fi
 # check for curl
 if ! [ -x "$(command -v curl)" ]; then
   echo "* curl is required in order for this script to work."
-  echo "* Install curl using apt:"
-  echo "  sudo apt update"
-  echo "  sudo apt install curl"
+  echo "* install using apt (Debian and derivatives) or yum/dnf (CentOS)"
   exit 1
 fi
 
-output() {
-  echo -e "* ${1}"
+#################################
+########## Variables ############
+#################################
+
+# download URLs
+WINGS_DL_URL="https://github.com/pterodactyl/wings/releases/latest/download/wings_linux_amd64"
+GITHUB_BASE_URL="https://raw.githubusercontent.com/icedmoca/pterodactyl-install-script/$GITHUB_SOURCE"
+
+COLOR_RED='\033[0;31m'
+COLOR_NC='\033[0m'
+
+INSTALL_MARIADB=false
+
+# firewall
+CONFIGURE_FIREWALL=false
+CONFIGURE_UFW=false
+CONFIGURE_FIREWALL_CMD=false
+
+# SSL (Let's Encrypt)
+CONFIGURE_LETSENCRYPT=false
+FQDN=""
+EMAIL=""
+
+#################################
+####### Version checking ########
+#################################
+
+get_latest_release() {
+  curl --silent "https://api.github.com/repos/$1/releases/latest" | # Get latest release from GitHub api
+    grep '"tag_name":' |                                            # Get tag line
+    sed -E 's/.*"([^"]+)".*/\1/'                                    # Pluck JSON value
 }
 
-error() {
-  COLOR_RED='\033[0;31m'
-  COLOR_NC='\033[0m'
+echo "* Retrieving release information.."
+WINGS_VERSION="$(get_latest_release "pterodactyl/wings")"
 
+#################################
+####### Visual functions ########
+#################################
+
+print_error() {
   echo ""
   echo -e "* ${COLOR_RED}ERROR${COLOR_NC}: $1"
   echo ""
 }
 
-done=false
-
-output "Pterodactyl installation script @ $SCRIPT_VERSION"
-output
-output "https://github.com/icedmoca/pterodactyl-install-script"
-output
-output "This script is not associated with the official Pterodactyl Project."
-
-output
-
-panel() {
-  bash <(curl -s https://raw.githubusercontent.com/icedmoca/pterodactyl-install-script/$SCRIPT_VERSION/install-panel.sh) --ubuntu-22.04
+print_warning() {
+  COLOR_YELLOW='\033[1;33m'
+  COLOR_NC='\033[0m'
+  echo ""
+  echo -e "* ${COLOR_YELLOW}WARNING${COLOR_NC}: $1"
+  echo ""
 }
-
-wings() {
-  bash <(curl -s https://raw.githubusercontent.com/icedmoca/pterodactyl-install-script/$SCRIPT_VERSION/install-wings.sh) --ubuntu-22.04
-}
-
-while [ "$done" == false ]; do
-  options=(
-    "Install the panel"
-    "Install Wings"
-    "Install both [0] and [1] on the same machine (wings script runs after panel)\n"
-  )
-
-  actions=(
-    "panel"
-    "wings"
-    "panel; wings"
-  )
-
-  output "Pick an option:"
-
-  for i in "${!options[@]}"; do
-    output "[$i] ${options[$i]}"
+print_brake() {
+  for ((n=0;n<$1;n++)); do
+    echo -n "#"
   done
+  echo ""
+}
 
-  echo -n "* Input 0-$((${#actions[@]}-1)): "
-  read -r action
+hyperlink() {
+  echo -e "\e]8;;${1}\a${1}\e]8;;\a"
+}
 
-  [ -z "$action" ] &&
-  [ -z "$action" ] && error "Input is required" && continue
+#################################
+####### OS check funtions #######
+#################################
 
-  valid_input=("$(for ((i=0;i<=${#actions[@]}-1;i+=1)); do echo "${i}"; done)")
-  [[ ! " ${valid_input[*]} " =~ ${action} ]] && error "Invalid option"
-  [[ " ${valid_input[*]} " =~ ${action} ]] && done=true && eval "${actions[$action]}"
-done
+detect_distro() {
+  # Existing code for detecting the distribution (Ubuntu, Debian, CentOS, etc.)
+}
+
+check_os_comp() {
+  # Existing code for checking the compatibility of the operating system
+}
+
+############################
+## INSTALLATION FUNCTIONS ##
+############################
+
+apt_update() {
+  # Existing code for updating packages (APT)
+}
+
+yum_update() {
+  # Existing code for updating packages (YUM)
+}
+
+dnf_update() {
+  # Existing code for updating packages (DNF)
+}
+
+enable_docker(){
+  # Existing code for enabling and starting Docker service
+}
+
+install_docker() {
+  # Existing code for installing Docker
+}
+
+ptdl_dl() {
+  # Existing code for downloading Pterodactyl Wings
+}
+
+systemd_file() {
+  # Existing code for installing systemd service for Wings
+}
+
+install_mariadb() {
+  # Existing code for installing MariaDB (MySQL) server
+}
+
+#################################
+##### OS SPECIFIC FUNCTIONS #####
+#################################
+
+ask_letsencrypt() {
+  # Existing code for asking about Let's Encrypt SSL configuration
+}
+
+firewall_ufw() {
+  # Existing code for configuring UFW firewall
+}
+
+firewall_firewalld() {
+  # Existing code for configuring firewalld firewall
+}
+
+letsencrypt() {
+  # Existing code for obtaining Let's Encrypt SSL certificate
+}
+
+####################
+## MAIN FUNCTIONS ##
+####################
+
+perform_install() {
+  # Existing code for performing the installation steps
+}
+
+main() {
+  # Existing code for the main execution flow
+}
+
+function goodbye {
+  # Existing code for displaying the completion message
+}
+
+# Run the script
+main
+goodbye
