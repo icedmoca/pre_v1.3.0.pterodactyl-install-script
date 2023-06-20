@@ -2,32 +2,6 @@
 
 set -e
 
-##############################################################################
-#                                                                            #
-# Project 'pterodactyl-installer-script'                                     #
-#                                                                            #
-#            This script is intended for personal use ONLY                   #
-#                                                                            #
-#   This program is free software: you can redistribute it and/or modify     #
-#   it under the terms of the GNU General Public License as published by     #
-#   the Free Software Foundation, either version 3 of the License, or        #
-#   (at your option) any later version.                                      #
-#                                                                            #
-#   This program is distributed in the hope that it will be useful,          #
-#   but WITHOUT ANY WARRANTY; without even the implied warranty of           #
-#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the            #
-#   GNU General Public License for more details.                             #
-#                                                                            #
-#   You should have received a copy of the GNU General Public License        #
-#   along with this program.  If not, see <https://www.gnu.org/licenses/>.   #
-#                                                                            #
-# https://github.com/icedmoca/pterodactyl-install-script/blob/master/LICENSE #
-#                                                                            #
-# This script is not associated with the official Pterodactyl Project.       #
-# https://github.com/icedmoca/pterodactyl-install-script                     #
-#                                                                            #
-##############################################################################
-
 ######## General checks #########
 
 # exit with error status code if user is not root
@@ -484,8 +458,8 @@ selinux_allow() {
   setsebool -P httpd_unified 1 || true
 }
 
-ubuntu20_dep() {
-  echo "* Installing dependencies for Ubuntu 20.."
+ubuntu22_dep() {
+  echo "* Installing dependencies for Ubuntu 22.04.."
 
   # Add "add-apt-repository" command
   apt -y install software-properties-common curl apt-transport-https ca-certificates gnupg
@@ -493,13 +467,19 @@ ubuntu20_dep() {
   # Ubuntu universe repo
   add-apt-repository universe
 
-  # Install Dependencies
-  apt -y install php7.4 php7.4-{cli,gd,mysql,pdo,mbstring,tokenizer,bcmath,xml,fpm,curl,zip} mariadb-server nginx tar unzip git redis-server redis cron
+  # Add Ondrej PHP repository for PHP 8.0
+  add-apt-repository ppa:ondrej/php
+
+  # Update package information
+  apt update
+
+  # Install Dependencies (PHP 8.0)
+  apt -y install php8.0 php8.0-{cli,gd,mysql,pdo,mbstring,tokenizer,bcmath,xml,fpm,curl,zip} mariadb-server nginx tar unzip git redis-server redis cron
 
   # Enable services
   enable_services_debian_based
 
-  echo "* Dependencies for Ubuntu installed!"
+  echo "* Dependencies for Ubuntu 22.04 installed!"
 }
 
 ubuntu18_dep() {
