@@ -55,7 +55,7 @@ fi
 
 # download URLs
 WINGS_DL_URL="https://github.com/pterodactyl/wings/releases/latest/download/wings_linux_amd64"
-GITHUB_BASE_URL="https://raw.githubusercontent.com/icedmoca/pterodactyl-install-script/$GITHUB_SOURCE"
+GITHUB_BASE_URL="https://raw.githubusercontent.com/icedmoca/pre_v1.3.0.pterodactyl-install-script/$GITHUB_SOURCE"
 
 COLOR_RED='\033[0;31m'
 COLOR_NC='\033[0m'
