@@ -5,6 +5,14 @@
 >Lightweight installation script for game server manager pterodactyl. This panel can run any game server.
 
 
+The repository pterodactyl-install-script by icedmoca is designed to install Pterodactyl, a game server management panel. According to the available documentation and scripts within the repository, this installation script supports Pterodactyl panel versions before v1.3.0.
+
+The installation script has been tested on various operating systems including Ubuntu (14.04, 16.04, 18.04, 20.04), Debian (8, 9, 10), and CentOS (6, 7, 8), with specific support for Nginx and PHP 7.4 configurations.
+
+It is important to note that this repository is deprecated and no longer maintained. Users are encouraged to use the installer maintained by vilhelmprytz for a more up-to-date and secure installation process.
+
+
+
 ## Using the installation script
 
 >For Pterodactyl panel versions before v1.3.0
